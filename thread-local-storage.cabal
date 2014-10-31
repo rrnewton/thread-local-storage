@@ -31,7 +31,7 @@ build-type:          Simple
 -- extra-source-files:  
 cabal-version:       >=1.10
 
-extra-source-files:  TLS_Sig.hs
+extra-source-files:  Data/TLS/TLS_Sig.hs
 
 library
   exposed-modules:     Data.TLS.GHC, Data.TLS.PThread
