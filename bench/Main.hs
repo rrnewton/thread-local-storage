@@ -38,32 +38,44 @@ main = do
 --                         ++ " --raw tls_report.criterion "                                                  
               else args
 
-  withArgs args' $ defaultMain $ concat
-   [    
-    [
+      threadify fn =
+          bgroup ""
+          [ fn (threads, suff)
+          | threads <- [1..numCap*4],
+            let suff = "_" ++ show threads ++"io_"++ show numCap++"os" ]
+
+      mkTests name mkTLS getTLS freeTLS = bgroup name 
+         [
+           -- bench ("counter/getTLS/incrCntr"++suff) $
+           --       benchPar0 threads (GHC.mkTLS (newCounter 0))
+           --                     (\t -> incrCounter_ 1 =<< GHC.getTLS t)
+           threadify $ \ (threads,suff) -> 
+            bench ("counter/getTLS/readIORef"++suff) $
+                  benchPar0 threads (mkTLS (newIORef ()))
+                                (\t -> readIORef =<< getTLS t)
+                                freeTLS
+         ]
+                   
+  withArgs args' $ defaultMain $ 
+   [ mkTests "PThread" PT.mkTLS  PT.getTLS  PT.freeTLS
+   , mkTests "GHC"     GHC.mkTLS GHC.getTLS GHC.freeTLS
+   ]
 {-     bgroup "infrastructure"
       [ bench ("benchPar1"++suff) $ benchPar1 threads (return ())
       , bench ("benchPar0"++suff) $ benchPar0 threads (return ()) (\_ -> return ())
 --      , bench ("benchPar2"++suff) $ benchPar2 threads (return ())              
-      ], -}
-     
-     bgroup "GHC"
-      [ bench ("counter/getTLS/incrCntr"++suff) $
-              benchPar0 threads (GHC.mkTLS (newCounter 0))
-                            (\t -> incrCounter_ 1 =<< GHC.getTLS t)
-      , bench ("counter/getTLS/readIORef"++suff) $
-              benchPar0 threads (GHC.mkTLS (newIORef ()))
-                            (\t -> readIORef =<< GHC.getTLS t)
-      ]
-    ]
-   | threads <- [1..numCap*4],
-    let suff = "_" ++ show threads ++"io_"++ show numCap++"os" ]
+      ], -}          
 
+   -- | ]
+
+ where
+
+               
 
 ----------------------------------------------------------------------------------------------------
 
-benchPar0 :: Int -> IO a -> (a -> IO ()) -> Benchmarkable
-benchPar0 numT new fn = Benchmarkable $ \ iters -> do
+benchPar0 :: Int -> IO a -> (a -> IO ()) -> (a -> IO ()) -> Benchmarkable
+benchPar0 numT new fn shutd = Benchmarkable $ \ iters -> do
   x <- new
   numCap  <- getNumCapabilities
   -- We compute the number of iterations such that the time would be
@@ -77,7 +89,9 @@ benchPar0 numT new fn = Benchmarkable $ \ iters -> do
     _ <- forkOn n $ do rep perThread (fn x)
                        putMVar v ()
     return v
-  forM_ mvs takeMVar           
+  forM_ mvs takeMVar
+  -- Shut down only when all threads are finished with it:
+  shutd x
 {-# INLINE benchPar0 #-}
 
 

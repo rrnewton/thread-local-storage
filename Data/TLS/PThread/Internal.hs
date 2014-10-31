@@ -34,17 +34,32 @@ foreign import ccall unsafe
 foreign import ccall unsafe
    pthread_setspecific :: Key -> StablePtr a -> IO Int
 
+foreign import ccall unsafe
+   pthread_key_delete :: Key -> IO Int
+                          
 check_error :: ()
 check_error =
- if get_pthread_key_size == sizeOf(0::Word)
+--  if get_pthread_key_size == sizeOf(0::Word)
+ if get_pthread_key_size <= sizeOf(0::Word)
  then ()
- else error "Data.TLS.PThread: internal invariant broken!  Expected pthread_key_t to be word-sized!"
+ else error $ "Data.TLS.PThread: internal invariant broken!  Expected pthread_key_t to be word-sized!\n"
+             ++"Instead it was: "++show get_pthread_key_size
+      
 
 {-# INLINE setspecific #-}
 setspecific :: Key -> StablePtr a -> IO ()
 setspecific k p = do
     code <- pthread_setspecific k p 
     unless (code == 0) (error $ "pthread_setspecific returned error code: "++show code)
+
+{-# INLINE delete #-}
+delete :: Key -> IO ()
+delete k = do
+    code <- pthread_key_delete k
+--    putStrLn $ "KEY DELETED: "++show k
+    unless (code == 0) (error $ "pthread_key_delete returned error code: "++show code)
+    return ()
+           
            
 --------------------------------------------------------------------------------
 
@@ -56,6 +71,7 @@ data TLS a = TLS { key       :: {-# UNPACK #-} !Key
 mkTLS new = do
   evaluate check_error
   key  <- easy_make_pthread_key
+--   putStrLn $ "KEY CREATED: "++show key
   allC <- newIORef []
   return $! TLS key new allC
 
@@ -78,6 +94,7 @@ forEachTLS_ tls fn = do
   ls <- allTLS tls
   forM_ ls fn 
 
-freeTLS TLS{allCopies} = do 
+freeTLS TLS{key,allCopies} = do 
     ls <- readIORef allCopies
+    delete key
     mapM_ freeStablePtr ls
