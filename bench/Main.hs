@@ -1,3 +1,122 @@
+{-# LANGUAGE BangPatterns #-}
+
+module Main where
+
+import qualified Data.TLS.GHC as GHC
+import qualified Data.TLS.GCC as GCC
+import qualified Data.TLS.PThread as PT
+
+import Criterion
+import Criterion.Types
+import Criterion.Main
+import Data.Atomics.Counter
+    
+import Control.Monad
+import Control.Concurrent.MVar
+import Data.IORef
+import GHC.Conc
+import System.Environment 
+--------------------------------------------------------------------------------
+    
+main :: IO ()
+main = do
+  numProc <- getNumProcessors
+  n       <- getNumCapabilities             
+  when (n == 1) $ do putStrLn "HACK: using setNumCapabilities to bump it up... should set this in the .cabal"
+                     setNumCapabilities numProc
+  numCap  <- getNumCapabilities
+  putStrLn $ "Benchmarking platform with "++show numProc++
+             " processors, while currently using "++show numCap++" threads."
+
+  -- Substitute in default command line args:
+  args <- getArgs
+  let args' = if null args
+              then words $ " --regress=allocated:iters --regress=bytesCopied:iters --regress=cycles:iters "++
+                           " --regress=numGcs:iters --regress=mutatorWallSeconds:iters --regress=gcWallSeconds:iters "++
+                           " --regress=cpuTime:iters " ++
+                           " -o tls_report.html " 
+--                         ++ " --raw tls_report.criterion "                                                  
+              else args
+
+  withArgs args' $ defaultMain $ concat
+   [    
+    [
+{-     bgroup "infrastructure"
+      [ bench ("benchPar1"++suff) $ benchPar1 threads (return ())
+      , bench ("benchPar0"++suff) $ benchPar0 threads (return ()) (\_ -> return ())
+--      , bench ("benchPar2"++suff) $ benchPar2 threads (return ())              
+      ], -}
+     
+     bgroup "GHC"
+      [ bench ("counter/getTLS/incrCntr"++suff) $
+              benchPar0 threads (GHC.mkTLS (newCounter 0))
+                            (\t -> incrCounter_ 1 =<< GHC.getTLS t)
+      , bench ("counter/getTLS/readIORef"++suff) $
+              benchPar0 threads (GHC.mkTLS (newIORef ()))
+                            (\t -> readIORef =<< GHC.getTLS t)
+      ]
+    ]
+   | threads <- [1..numCap*4],
+    let suff = "_" ++ show threads ++"io_"++ show numCap++"os" ]
 
 
-main = putStrLn "TODO: benchmarking here"
+----------------------------------------------------------------------------------------------------
+
+benchPar0 :: Int -> IO a -> (a -> IO ()) -> Benchmarkable
+benchPar0 numT new fn = Benchmarkable $ \ iters -> do
+  x <- new
+  numCap  <- getNumCapabilities
+  -- We compute the number of iterations such that the time would be
+  -- flat IFF parallelism works perfectly up to numCapabilities, and
+  -- then load balancing works perfectly when # threads exceeds
+  -- numCapabilities.
+  let totalIters = (fromIntegral iters) * (max numCap numT)
+      perThread  = totalIters `quot` numT
+  mvs <- forM [0..numT-1] $ \ n -> do
+    v <- newEmptyMVar 
+    _ <- forkOn n $ do rep perThread (fn x)
+                       putMVar v ()
+    return v
+  forM_ mvs takeMVar           
+{-# INLINE benchPar0 #-}
+
+
+-- | Benchmarking the same action on ALL of N threads.
+--   This version uses MVar synchronization.
+benchPar1 :: Int -> IO () -> Benchmarkable
+benchPar1 num act = Benchmarkable $ \ iters -> do                      
+  mvs <- forM [0..num-1] $ \ n -> do
+    v <- newEmptyMVar 
+    _ <- forkOn n $ do rep (fromIntegral iters) act
+                       putMVar v ()
+    return v
+  forM_ mvs takeMVar           
+{-# INLINE benchPar1 #-}
+
+-- | This version never blocks on an MVar.
+benchPar2 :: Int -> IO () -> Benchmarkable
+benchPar2 num act = Benchmarkable $ \ iters -> do
+  done <- newCounter 0
+  let waitCounter = do x <- readCounter done
+                       unless (num == x) waitCounter
+      go = do rep (fromIntegral iters) act
+              incrCounter_ 1 done
+              waitCounter
+  forM_ [1..num-1] $ \ n -> forkOn n go
+  go
+  
+{-# INLINE benchPar2 #-}
+
+-- | My own forM for inclusive numeric ranges (not requiring deforestation optimizations).
+for_ :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
+for_ start end _fn | start > end = error "for_: start is greater than end"
+for_ start end fn = loop start
+  where
+   loop !i | i > end  = return ()
+	   | otherwise = do fn i; loop (i+1)
+{-# INLINE for_ #-}
+
+rep :: Monad m => Int -> (m ()) -> m ()
+rep n m = for_ 1 n (\_ -> m)
+{-# INLINE rep #-}
+
