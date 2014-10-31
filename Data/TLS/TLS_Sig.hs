@@ -1,11 +1,12 @@
 -- WARNING: This is not a full Haskell module, it is a snippet to #include...
 
 -- | Make a new per-thread variable.  This guarantees that no two
--- threads that execute `getTLS` on the resulting `TLS` value will
--- receive the same copy of the value.  To meet this guarantee there
--- must be AT LEAST one copy of the TLS per OS thread that calls
--- `getAll`, but their may be more.  (And in particular, there may be
--- one per lightweight IO thread.)
+-- threads that execute `getTLS` simultaneosly will receive the same
+-- copy of the value.  Generally, to meet this guarantee there must be
+-- AT LEAST one copy of the TLS variable for each distinct OS thread
+-- that calls `getAll`.  But this is a lower bound, and there may be
+-- *more*.  In particular, there could be one per Haskell IO thread
+-- rather than per OS thread.
 --
 -- Thread safe.
 mkTLS :: IO a -- ^ Action for creating a single copy of the TLS variable.
