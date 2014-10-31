@@ -1,6 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 
-import qualified Data.TLS.PThread as PThread
+import qualified Data.TLS.PThread.Internal as PThread
 import qualified Data.TLS.GHC as GHC
 
 -- import Data.Atomics
@@ -9,23 +9,30 @@ import Foreign.Ptr
 import GHC.Conc
 import Control.Concurrent.MVar
 import Control.Monad
+import Control.Exception
 import System.Mem.StableName
 
 main :: IO ()
 main = do
   putStrLn "Run a very simple TLs test"
-  putStrLn $ "Key size: "++show PThread.get_pthread_key_size
+  putStrLn $ "pethread_key_t size: "++show PThread.get_pthread_key_size
 
-  testIt "GHC" GHC.mkTLS GHC.getTLS GHC.allTLS
-  testIt "PThread" PThread.mkTLS PThread.getTLS PThread.allTLS
+  testIt "GHC" GHC.mkTLS GHC.getTLS GHC.allTLS GHC.freeTLS
+  testIt "PThread" PThread.mkTLS PThread.getTLS PThread.allTLS PThread.freeTLS
 
-testIt :: Show b => String -> (IO (IORef Int) -> IO t) -> (t -> IO (IORef Int)) -> (t -> IO [IORef b]) -> IO ()
-testIt name mkTLS getTLS allTLS = do
+testIt :: Show b => String
+       -> (IO (IORef Int) -> IO t)
+       -> (t -> IO (IORef Int))
+       -> (t -> IO [IORef b])
+       -> (t -> IO a)
+       -> IO ()
+testIt name mkTLS getTLS allTLS freeTLS = do
   putStrLn$ "\n  Testing "++name ++" implementation: "
   putStrLn "----------------------------------------"
+  numCap <- getNumCapabilities
   tls <- mkTLS (do putStrLn "  New() called.."
                    newIORef (-1 :: Int))
-  mvs <- sequence $ replicate numCapabilities newEmptyMVar
+  mvs <- sequence $ replicate numCap newEmptyMVar
   forM_ (zip [0..] mvs) $ \(ix,mv) -> forkOn ix $ do
     r   <- getTLS tls
     n   <- readIORef r
@@ -47,7 +54,7 @@ testIt name mkTLS getTLS allTLS = do
   putStrLn$ "Results: "++show ls2
   ls3 <- mapM ssn ls
   putStrLn$ "Result, stable names: "++show ls3
-
+  freeTLS tls
   {- forM_ [1..(10::Int)] $ \_ -> do 
     r   <- getTLS tls
     n   <- readIORef r
@@ -55,8 +62,7 @@ testIt name mkTLS getTLS allTLS = do
     sn  <- ssn r
     putStrLn$  "Read/write redux ("++show tid++"): "++show n++", stable name "++ sn
     writeIORef r 99 -}
-
-  putStrLn "Done."
+  putStrLn "TLS Freed."
 
 
 ssn :: a -> IO String
