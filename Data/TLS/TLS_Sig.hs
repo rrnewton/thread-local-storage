@@ -20,9 +20,10 @@ mkTLS :: IO a -- ^ Action for creating a single copy of the TLS variable.
 getTLS :: TLS a -> IO a
 
 
--- | After a TLS-based computation is complete, iterate through all the 
+-- | After a TLS-based computation is complete, iterate through all
+-- the copies of the TLS variable which were used by all threads.
 -- 
--- NOT thread safe
+-- NOT thread safe.
 allTLS :: TLS a -> IO [a]
 
 
