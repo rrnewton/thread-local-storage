@@ -5,18 +5,18 @@ name:                thread-local-storage
 version:             0.1.0.0
 synopsis:            Several options for thread-local-storage (TLS) in Haskell.
 description:
-
+   .
    Thread-local storage, or TLS, is an important ingredient in many
    algorithms and data structures.
-
+   . 
    The GHC compiler does not provide a built-in notion of TLS either
    at the IO-thread or OS thread level.  This package provides a few
    different implementations of a simple TLS API.
-
+   . 
    All exported modules provide exactly the same interface with
    different implementations.  Run the included criterion benchmark
    suite to ascertain which performs the best on your platform.
-
+   . 
    Example criterion benchmark data can be found here (from an Intel Ivy-Bridge i7-3770 desktop):
       <http://www.cs.indiana.edu/~rrnewton/datasets/xmen_tls_report.html>
            
