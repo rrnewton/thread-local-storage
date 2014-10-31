@@ -16,7 +16,11 @@ description:
    All exported modules provide exactly the same interface with
    different implementations.  Run the included criterion benchmark
    suite to ascertain which performs the best on your platform.
-                                                                
+
+   Example criterion benchmark data can be found here (from an Intel Ivy-Bridge i7-3770 desktop):
+      <http://www.cs.indiana.edu/~rrnewton/datasets/xmen_tls_report.html>
+           
+         
 license:             BSD3
 license-file:        LICENSE
 author:              Ryan Newton
