@@ -31,12 +31,13 @@ build-type:          Simple
 -- extra-source-files:  
 cabal-version:       >=1.10
 
+extra-source-files:  Data/TLS/TLS_Sig.hs
+
 library
   exposed-modules:     Data.TLS.GHC, Data.TLS.PThread
 --  Data.TLS.GCC,  
   other-modules:       Data.TLS.PThread.Internal
   other-extensions:    BangPatterns, NamedFieldPuns, CPP
-  c-sources: cbits/helpers.c
   build-depends:       base >=4.6 && < 5.0,
                        containers >=0.5
   -- hs-source-dirs:      
@@ -68,5 +69,5 @@ test-suite test-tls
 
   -- DUPLICATED, from above:
   build-depends: containers >=0.5
-  c-sources: cbits/helpers.c       
+--  c-sources: cbits/helpers.c       
      
