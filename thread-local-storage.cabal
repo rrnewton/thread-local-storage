@@ -28,7 +28,8 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     Data.TLS.GCC, Data.TLS.GHC, Data.TLS.PThread
+  exposed-modules:     Data.TLS.GHC, Data.TLS.PThread
+--  Data.TLS.GCC,  
   other-modules:       Data.TLS.PThread.Internal
   other-extensions:    BangPatterns, NamedFieldPuns, CPP
   c-sources: cbits/helpers.c
