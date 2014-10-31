@@ -36,7 +36,7 @@ mkTLS new = do
   return $! TLS new v
 
 getTLS TLS{mkNew,allCopies} = do
-    tid <- myThreadId
+    tid  <- myThreadId
     peek <- readIORef allCopies
     case M.lookup tid peek of
       Just a  -> return a
