@@ -4,6 +4,12 @@
 
 -- | This is the simplest implementation of thread-local storage using
 -- GHC's built-in ThreadId capabilities.
+--
+-- While the interface below is designed to match the other
+-- implementations of TLS in this package, the GHC implementation can
+-- generaly be relied upon to keep a stable copy of the TLS variable
+-- for each `ThreadId` that calls `getTLS`.  This may change in the
+-- future, however!
 
 module Data.TLS.GHC
     ( TLS
