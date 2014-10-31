@@ -37,7 +37,8 @@ library
   other-modules:       Data.TLS.PThread.Internal
   other-extensions:    BangPatterns, NamedFieldPuns, CPP
   c-sources: cbits/helpers.c
-  build-depends:       base >=4.6, containers >=0.5
+  build-depends:       base >=4.6 && < 5.0,
+                       containers >=0.5
   -- hs-source-dirs:      
   default-language:    Haskell2010
   ghc-options: -O2
@@ -48,7 +49,7 @@ benchmark bench-haskell-tls
   hs-source-dirs: ./bench/
   type: exitcode-stdio-1.0
   build-depends: thread-local-storage
-  build-depends: base >= 4.6,
+  build-depends: base >= 4.6 && < 5.0,
                  criterion >= 1.0,
                  atomic-primops >= 0.6.0.6
   default-language:    Haskell2010
@@ -60,7 +61,7 @@ test-suite test-tls
   hs-source-dirs: ./ ./tests/
   type: exitcode-stdio-1.0
 -- build-depends: thread-local-storage
-  build-depends: base >= 4.6,
+  build-depends: base >= 4.6 && < 5.0,
                  atomic-primops >= 0.6.0.6
   default-language:    Haskell2010
   ghc-options: -rtsopts -O2 -threaded -with-rtsopts=-N4
