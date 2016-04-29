@@ -3,8 +3,10 @@
 module Main where
 
 import qualified Data.TLS.GHC as GHC
-import qualified Data.TLS.GCC as GCC
 import qualified Data.TLS.PThread as PT
+
+-- Retired:
+-- import qualified Data.TLS.GCC as GCC
 
 import Criterion
 import Criterion.Types

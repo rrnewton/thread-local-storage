@@ -34,8 +34,10 @@ cabal-version:       >=1.10
 extra-source-files:  Data/TLS/TLS_Sig.hs
 
 library
-  exposed-modules:     Data.TLS.GHC, Data.TLS.PThread
---  Data.TLS.GCC,  
+  exposed-modules:     Data.TLS.GHC,
+                       Data.TLS.PThread
+                   -- Not finished yet:
+                   --  Data.TLS.GCC
   other-modules:       Data.TLS.PThread.Internal
   other-extensions:    BangPatterns, NamedFieldPuns, CPP
   build-depends:       base >=4.6 && < 5.0,
