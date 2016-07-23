@@ -17,8 +17,8 @@ main = do
   putStrLn "Run a very simple TLs test"
   putStrLn $ "pethread_key_t size: "++show PThread.get_pthread_key_size
 
-  testIt "GHC" GHC.mkTLS GHC.getTLS GHC.allTLS GHC.freeTLS
-  testIt "PThread" PThread.mkTLS PThread.getTLS PThread.allTLS PThread.freeTLS
+  testIt "GHC" GHC.mkTLS GHC.getTLS GHC.allTLS GHC.freeAllTLS
+  testIt "PThread" PThread.mkTLS PThread.getTLS PThread.allTLS PThread.freeAllTLS
 
 testIt :: Show b => String
        -> (IO (IORef Int) -> IO t)
@@ -26,7 +26,7 @@ testIt :: Show b => String
        -> (t -> IO [IORef b])
        -> (t -> IO ())
        -> IO ()
-testIt name mkTLS getTLS allTLS freeTLS = do
+testIt name mkTLS getTLS allTLS freeAllTLS = do
   putStrLn$ "\n  Testing "++name ++" implementation: "
   putStrLn "----------------------------------------"
   numCap <- getNumCapabilities
@@ -54,7 +54,7 @@ testIt name mkTLS getTLS allTLS freeTLS = do
   putStrLn$ "Results: "++show ls2
   ls3 <- mapM ssn ls
   putStrLn$ "Result, stable names: "++show ls3
-  freeTLS tls
+  freeAllTLS tls
   {- forM_ [1..(10::Int)] $ \_ -> do 
     r   <- getTLS tls
     n   <- readIORef r

@@ -30,8 +30,22 @@ allTLS :: TLS a -> IO [a]
 -- | Like `allTLS`, but apply a computation directly rather than
 -- building a list.
 forEachTLS_ :: TLS a -> (a -> IO ()) -> IO ()
-         
+
+               
+-- | An alias for `freeAllTLS`.
+freeTLS :: TLS a -> IO ()
+freeTLS = freeAllTLS
+{-# DEPRECATED freeTLS "Replaced by freeAllTLS" #-}
+           
 -- | Release all copies of the TLS variable, across all threads.  This
 -- does not guarantee the storage will be freed immediately, but it
 -- guarantees that the storage can be reclaimed in the future.
-freeTLS :: TLS a -> IO ()
+--
+-- The TLS value is still usable after this call, but any future calls
+-- to `getTLS` must initialize new state.
+--
+-- Not thread safe.
+freeAllTLS :: TLS a -> IO ()
+
+
+           

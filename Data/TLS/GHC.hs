@@ -17,6 +17,8 @@ module Data.TLS.GHC
     , getTLS
     , allTLS
     , forEachTLS_
+    , freeAllTLS
+    -- * Deprecated, backwards compatibility
     , freeTLS
     ) where
 
@@ -59,5 +61,6 @@ forEachTLS_ tls fn = do
   forM_ ls fn 
 
 -- Nothing to do here... we haven't pinned anything.  Normal GC is fine.
-freeTLS _ = return ()
+freeAllTLS _ =
+  do return ()
 

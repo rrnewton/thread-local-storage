@@ -1,3 +1,4 @@
+
 {-# LANGUAGE BangPatterns #-}
 
 module Main where
@@ -46,7 +47,7 @@ main = do
           | threads <- [1..numCap*4],
             let suff = "_" ++ show threads ++"io_"++ show numCap++"os" ]
 
-      mkTests name mkTLS getTLS freeTLS = bgroup name 
+      mkTests name mkTLS getTLS freeAllTLS = bgroup name 
          [
            -- bench ("counter/getTLS/incrCntr"++suff) $
            --       benchPar0 threads (GHC.mkTLS (newCounter 0))
@@ -55,12 +56,12 @@ main = do
             bench ("counter/getTLS/readIORef"++suff) $
                   benchPar0 threads (mkTLS (newIORef ()))
                                 (\t -> readIORef =<< getTLS t)
-                                freeTLS
+                                freeAllTLS
          ]
                    
   withArgs args' $ defaultMain $ 
-   [ mkTests "PThread" PT.mkTLS  PT.getTLS  PT.freeTLS
-   , mkTests "GHC"     GHC.mkTLS GHC.getTLS GHC.freeTLS
+   [ mkTests "PThread" PT.mkTLS  PT.getTLS  PT.freeAllTLS
+   , mkTests "GHC"     GHC.mkTLS GHC.getTLS GHC.freeAllTLS
    ]
 {-     bgroup "infrastructure"
       [ bench ("benchPar1"++suff) $ benchPar1 threads (return ())

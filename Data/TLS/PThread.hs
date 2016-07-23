@@ -18,6 +18,8 @@ module Data.TLS.PThread
     , getTLS
     , allTLS
     , forEachTLS_
+    , freeAllTLS
+    -- * Deprecated, backwards compatibility
     , freeTLS
     )
     where

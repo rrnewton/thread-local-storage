@@ -93,7 +93,7 @@ forEachTLS_ tls fn = do
   ls <- allTLS tls
   forM_ ls fn 
 
-freeTLS TLS{key,allCopies} = do 
+freeAllTLS TLS{key,allCopies} = do 
     ls <- readIORef allCopies
     delete key
     mapM_ freeStablePtr ls
