@@ -8,7 +8,6 @@ module Data.TLS.PThread.Internal where
 
 import Control.Monad
 import Control.Exception
-import Data.Word
 import Data.IORef
 import Foreign.Ptr
 import Foreign.StablePtr
