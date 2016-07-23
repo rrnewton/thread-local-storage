@@ -67,6 +67,7 @@ test-suite test-tls
   main-is: Main.hs
   -- Here we reinclude/rebuild the main sources so we can test the .Internal module:
   hs-source-dirs: ./ ./tests/
+  other-modules: Data.TLS.GHC, Data.TLS.PThread.Internal
   type: exitcode-stdio-1.0
   build-depends: base >= 4.6 && < 5.0,
                  atomic-primops >= 0.6.0.6

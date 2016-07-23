@@ -5,11 +5,11 @@ import qualified Data.TLS.GHC as GHC
 
 -- import Data.Atomics
 import Data.IORef
-import Foreign.Ptr
+-- import Foreign.Ptr
 import GHC.Conc
 import Control.Concurrent.MVar
 import Control.Monad
-import Control.Exception
+-- import Control.Exception
 import System.Mem.StableName
 
 main :: IO ()
@@ -24,7 +24,7 @@ testIt :: Show b => String
        -> (IO (IORef Int) -> IO t)
        -> (t -> IO (IORef Int))
        -> (t -> IO [IORef b])
-       -> (t -> IO a)
+       -> (t -> IO ())
        -> IO ()
 testIt name mkTLS getTLS allTLS freeTLS = do
   putStrLn$ "\n  Testing "++name ++" implementation: "

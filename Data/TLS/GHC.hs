@@ -21,7 +21,6 @@ module Data.TLS.GHC
     ) where
 
 import Control.Monad
-import Control.Exception (evaluate)
 import Control.Concurrent
 import Data.Map.Strict as M
 import Data.IORef
