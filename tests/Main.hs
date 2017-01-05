@@ -7,6 +7,7 @@ import qualified Data.TLS.GHC as GHC
 import Data.IORef
 -- import Foreign.Ptr
 import GHC.Conc
+import Control.Concurrent (forkOS)
 import Control.Concurrent.MVar
 import Control.Monad
 -- import Control.Exception
@@ -33,7 +34,7 @@ testIt name mkTLS getTLS allTLS freeAllTLS = do
   tls <- mkTLS (do putStrLn "  New() called.."
                    newIORef (-1 :: Int))
   mvs <- sequence $ replicate numCap newEmptyMVar
-  forM_ (zip [0..] mvs) $ \(ix,mv) -> forkOn ix $ do
+  forM_ (zip [0..] mvs) $ \(ix,mv) -> forkOS $ do
     r   <- getTLS tls
     n   <- readIORef r
     tid <- myThreadId
