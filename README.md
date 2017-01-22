@@ -5,8 +5,8 @@
 [![BSD3 License](http://img.shields.io/badge/license-BSD3-brightgreen.svg)][tl;dr Legal: BSD3]
 
 [Hackage: text-show]:
-  http://hackage.haskell.org/package/text-show
-  "text-show package on Hackage"
+  http://hackage.haskell.org/package/thread-local-storage
+  "thread-local-storage package on Hackage"
 [Haskell.org]:
   http://www.haskell.org
   "The Haskell Programming Language"
