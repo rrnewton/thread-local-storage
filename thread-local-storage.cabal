@@ -17,7 +17,8 @@ description:
    Example criterion benchmark data can be found here (from an Intel Ivy-Bridge i7-3770 desktop):
       <http://www.cs.indiana.edu/~rrnewton/datasets/xmen_tls_report.html>
 
-
+homepage:            https://github.com/rrnewton/thread-local-storage
+bug-reports:         https://github.com/rrnewton/thread-local-storage/issues
 license:             BSD3
 license-file:        LICENSE
 author:              Ryan Newton
@@ -26,7 +27,7 @@ category:            System
 build-type:          Simple
 cabal-version:       >=1.10
 
-extra-source-files:  CHANGELOG.md, Data/TLS/TLS_Sig.hs
+extra-source-files:  CHANGELOG.md, README.md, Data/TLS/TLS_Sig.hs
 
 source-repository head
   type:     git
