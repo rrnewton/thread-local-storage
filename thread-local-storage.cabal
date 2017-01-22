@@ -1,5 +1,5 @@
 name:                thread-local-storage
-version:             0.1.0.4
+version:             0.1.1
 synopsis:            Several options for thread-local-storage (TLS) in Haskell.
 description:
    .
@@ -10,7 +10,7 @@ description:
    at the IO-thread or OS thread level.  This package provides a few
    different implementations of a simple TLS API.
    .
-   All exported modules provide exactly the same interface with
+   All exported public modules provide exactly the same interface with
    different implementations.  Run the included criterion benchmark
    suite to ascertain which performs the best on your platform.
    .
@@ -26,7 +26,7 @@ category:            System
 build-type:          Simple
 cabal-version:       >=1.10
 
-extra-source-files:  Data/TLS/TLS_Sig.hs
+extra-source-files:  CHANGELOG.md, Data/TLS/TLS_Sig.hs
 
 source-repository head
   type:     git
