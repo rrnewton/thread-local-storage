@@ -3,3 +3,4 @@
   whatsoever with this module, so use it with caution.
 * Add `pthread` to `extra-libraries`. Without it, some systems suffer
   from linker errors when using this library.
+* Fix build on GHC 7.6 and 7.8.

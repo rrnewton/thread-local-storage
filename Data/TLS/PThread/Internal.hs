@@ -17,6 +17,10 @@ import Foreign.Ptr
 import Foreign.StablePtr
 import Foreign.Storable(Storable(sizeOf))
 
+#if !(MIN_VERSION_base(4,8,0))
+import Data.Word (Word)
+#endif
+
 #include "../TLS_Sig.hs"
 --------------------------------------------------------------------------------
 

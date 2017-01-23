@@ -13,18 +13,18 @@ import Criterion
 import Criterion.Types
 import Criterion.Main
 import Data.Atomics.Counter
-    
+
 import Control.Monad
 import Control.Concurrent.MVar
 import Data.IORef
 import GHC.Conc
-import System.Environment 
+import System.Environment
 --------------------------------------------------------------------------------
-    
+
 main :: IO ()
 main = do
   numProc <- getNumProcessors
-  n       <- getNumCapabilities             
+  n       <- getNumCapabilities
   when (n == 1) $ do putStrLn "HACK: using setNumCapabilities to bump it up... should set this in the .cabal"
                      setNumCapabilities numProc
   numCap  <- getNumCapabilities
@@ -37,8 +37,8 @@ main = do
               then words $ " --regress=allocated:iters --regress=bytesCopied:iters --regress=cycles:iters "++
                            " --regress=numGcs:iters --regress=mutatorWallSeconds:iters --regress=gcWallSeconds:iters "++
                            " --regress=cpuTime:iters " ++
-                           " -o tls_report.html " 
---                         ++ " --raw tls_report.criterion "                                                  
+                           " -o tls_report.html "
+--                         ++ " --raw tls_report.criterion "
               else args
 
       threadify fn =
@@ -47,33 +47,33 @@ main = do
           | threads <- [1..numCap*4],
             let suff = "_" ++ show threads ++"io_"++ show numCap++"os" ]
 
-      mkTests name mkTLS getTLS freeAllTLS = bgroup name 
+      mkTests name mkTLS getTLS freeAllTLS = bgroup name
          [
            -- bench ("counter/getTLS/incrCntr"++suff) $
            --       benchPar0 threads (GHC.mkTLS (newCounter 0))
            --                     (\t -> incrCounter_ 1 =<< GHC.getTLS t)
-           threadify $ \ (threads,suff) -> 
+           threadify $ \ (threads,suff) ->
             bench ("counter/getTLS/readIORef"++suff) $
                   benchPar0 threads (mkTLS (newIORef ()))
                                 (\t -> readIORef =<< getTLS t)
                                 freeAllTLS
          ]
-                   
-  withArgs args' $ defaultMain $ 
+
+  withArgs args' $ defaultMain $
    [ mkTests "PThread" PT.mkTLS  PT.getTLS  PT.freeAllTLS
    , mkTests "GHC"     GHC.mkTLS GHC.getTLS GHC.freeAllTLS
    ]
 {-     bgroup "infrastructure"
       [ bench ("benchPar1"++suff) $ benchPar1 threads (return ())
       , bench ("benchPar0"++suff) $ benchPar0 threads (return ()) (\_ -> return ())
---      , bench ("benchPar2"++suff) $ benchPar2 threads (return ())              
-      ], -}          
+--      , bench ("benchPar2"++suff) $ benchPar2 threads (return ())
+      ], -}
 
    -- | ]
 
  where
 
-               
+
 
 ----------------------------------------------------------------------------------------------------
 
@@ -88,7 +88,7 @@ benchPar0 numT new fn shutd = Benchmarkable $ \ iters -> do
   let totalIters = (fromIntegral iters) * (max numCap numT)
       perThread  = totalIters `quot` numT
   mvs <- forM [0..numT-1] $ \ n -> do
-    v <- newEmptyMVar 
+    v <- newEmptyMVar
     _ <- forkOn n $ do rep perThread (fn x)
                        putMVar v ()
     return v
@@ -101,13 +101,13 @@ benchPar0 numT new fn shutd = Benchmarkable $ \ iters -> do
 -- | Benchmarking the same action on ALL of N threads.
 --   This version uses MVar synchronization.
 benchPar1 :: Int -> IO () -> Benchmarkable
-benchPar1 num act = Benchmarkable $ \ iters -> do                      
+benchPar1 num act = Benchmarkable $ \ iters -> do
   mvs <- forM [0..num-1] $ \ n -> do
-    v <- newEmptyMVar 
+    v <- newEmptyMVar
     _ <- forkOn n $ do rep (fromIntegral iters) act
                        putMVar v ()
     return v
-  forM_ mvs takeMVar           
+  forM_ mvs takeMVar
 {-# INLINE benchPar1 #-}
 
 -- | This version never blocks on an MVar.
@@ -121,7 +121,7 @@ benchPar2 num act = Benchmarkable $ \ iters -> do
               waitCounter
   forM_ [1..num-1] $ \ n -> forkOn n go
   go
-  
+
 {-# INLINE benchPar2 #-}
 
 -- | My own forM for inclusive numeric ranges (not requiring deforestation optimizations).
@@ -129,8 +129,8 @@ for_ :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
 for_ start end _fn | start > end = error "for_: start is greater than end"
 for_ start end fn = loop start
   where
-   loop !i | i > end  = return ()
-	   | otherwise = do fn i; loop (i+1)
+   loop !i | i > end   = return ()
+           | otherwise = do fn i; loop (i+1)
 {-# INLINE for_ #-}
 
 rep :: Monad m => Int -> (m ()) -> m ()
