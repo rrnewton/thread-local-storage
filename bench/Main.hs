@@ -13,6 +13,7 @@ import Criterion
 import Criterion.Types
 import Criterion.Main
 import Data.Atomics.Counter
+import Data.Int (Int64)
 
 import Control.Monad
 import Control.Concurrent.MVar
@@ -77,8 +78,18 @@ main = do
 
 ----------------------------------------------------------------------------------------------------
 
+-- We need to define this locally until
+-- https://github.com/bos/criterion/issues/147 is fixed
+toBenchmarkable :: (Int64 -> IO ()) -> Benchmarkable
+toBenchmarkable f = Benchmarkable noop (const noop) (const f) False
+{-# INLINE toBenchmarkable #-}
+
+noop :: Monad m => a -> m ()
+noop = const $ return ()
+{-# INLINE noop #-}
+
 benchPar0 :: Int -> IO a -> (a -> IO ()) -> (a -> IO ()) -> Benchmarkable
-benchPar0 numT new fn shutd = Benchmarkable $ \ iters -> do
+benchPar0 numT new fn shutd = toBenchmarkable $ \ iters -> do
   x <- new
   numCap  <- getNumCapabilities
   -- We compute the number of iterations such that the time would be
@@ -101,7 +112,7 @@ benchPar0 numT new fn shutd = Benchmarkable $ \ iters -> do
 -- | Benchmarking the same action on ALL of N threads.
 --   This version uses MVar synchronization.
 benchPar1 :: Int -> IO () -> Benchmarkable
-benchPar1 num act = Benchmarkable $ \ iters -> do
+benchPar1 num act = toBenchmarkable $ \ iters -> do
   mvs <- forM [0..num-1] $ \ n -> do
     v <- newEmptyMVar
     _ <- forkOn n $ do rep (fromIntegral iters) act
@@ -112,7 +123,7 @@ benchPar1 num act = Benchmarkable $ \ iters -> do
 
 -- | This version never blocks on an MVar.
 benchPar2 :: Int -> IO () -> Benchmarkable
-benchPar2 num act = Benchmarkable $ \ iters -> do
+benchPar2 num act = toBenchmarkable $ \ iters -> do
   done <- newCounter 0
   let waitCounter = do x <- readCounter done
                        unless (num == x) waitCounter
