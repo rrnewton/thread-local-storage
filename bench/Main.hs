@@ -10,10 +10,8 @@ import qualified Data.TLS.PThread as PT
 -- import qualified Data.TLS.GCC as GCC
 
 import Criterion
-import Criterion.Types
 import Criterion.Main
 import Data.Atomics.Counter
-import Data.Int (Int64)
 
 import Control.Monad
 import Control.Concurrent.MVar
@@ -77,16 +75,6 @@ main = do
 
 
 ----------------------------------------------------------------------------------------------------
-
--- We need to define this locally until
--- https://github.com/bos/criterion/issues/147 is fixed
-toBenchmarkable :: (Int64 -> IO ()) -> Benchmarkable
-toBenchmarkable f = Benchmarkable noop (const noop) (const f) False
-{-# INLINE toBenchmarkable #-}
-
-noop :: Monad m => a -> m ()
-noop = const $ return ()
-{-# INLINE noop #-}
 
 benchPar0 :: Int -> IO a -> (a -> IO ()) -> (a -> IO ()) -> Benchmarkable
 benchPar0 numT new fn shutd = toBenchmarkable $ \ iters -> do
