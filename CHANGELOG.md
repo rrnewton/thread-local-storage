@@ -1,4 +1,4 @@
-## next [????.??.??]
+## 0.1.2 [2017.06.23]
 * Fix the benchmark suite with `criterion-1.2`
 
 ## 0.1.1 [2017.01.22]
