@@ -15,6 +15,7 @@
 module Data.TLS.PThread
     ( TLS
     , mkTLS
+    , mkTLSWithDestructor
     , getTLS
     , allTLS
     , forEachTLS_
