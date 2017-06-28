@@ -1,3 +1,6 @@
+## next [????.??.??]
+* Ensure that threads calling `Data.TLS.PThread.getTLS` are bound threads
+
 ## 0.1.2 [2017.06.23]
 * Fix the benchmark suite with `criterion-1.2`
 
