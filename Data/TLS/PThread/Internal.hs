@@ -13,9 +13,10 @@ module Data.TLS.PThread.Internal where
 import Control.Monad
 import Control.Exception
 import Data.IORef
+import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import Foreign.StablePtr
-import Foreign.Storable(Storable(sizeOf))
+import Foreign.Storable(Storable(peek, poke, sizeOf))
 
 #if !(MIN_VERSION_base(4,8,0))
 import Data.Word (Word)
@@ -33,13 +34,13 @@ foreign import ccall unsafe
    pthread_key_create :: Ptr Key -> Ptr () -> IO Int
 
 foreign import ccall unsafe
-   easy_make_pthread_key :: IO Key
+   easy_make_pthread_key :: FunPtr (Ptr (StablePtr a) -> IO ()) -> IO Key
 
 foreign import ccall unsafe
-   pthread_getspecific :: Key -> IO (StablePtr a)
+   pthread_getspecific :: Key -> IO (Ptr (StablePtr a))
 
 foreign import ccall unsafe
-   pthread_setspecific :: Key -> StablePtr a -> IO Int
+   pthread_setspecific :: Key -> (Ptr (StablePtr a)) -> IO Int
 
 foreign import ccall unsafe
    pthread_key_delete :: Key -> IO Int
@@ -54,7 +55,7 @@ check_error =
 
 
 {-# INLINE setspecific #-}
-setspecific :: Key -> StablePtr a -> IO ()
+setspecific :: Key -> Ptr (StablePtr a) -> IO ()
 setspecific k p = do
     code <- pthread_setspecific k p
     unless (code == 0) (error $ "pthread_setspecific returned error code: "++show code)
@@ -73,35 +74,69 @@ delete k = do
 -- | A thread-local variable of type `a`.
 data TLS a = TLS { key       :: {-# UNPACK #-} !Key
                  , mknew     :: !(IO a)
-                 , allCopies :: {-# UNPACK #-} !(IORef [StablePtr a]) }
+                 , allCopies :: {-# UNPACK #-} !(IORef [Ptr (StablePtr a)])
+                 , destructor :: FunPtr (Ptr (StablePtr a) -> IO ())
+                 }
 
-mkTLS new = do
+mkTLS new = mkTLSWithDestructor new Nothing
+
+foreign import ccall "wrapper" wrapDestructor
+  :: (Ptr (StablePtr a) -> IO ()) -> IO (FunPtr (Ptr (StablePtr a) -> IO ()))
+
+-- | Like mkTLS but offers a destructor function which is called by any thread
+-- that created a copy of the variable when the thread exits. The destructor
+-- executes on a thread only if the thread exits before 'freeAllTLS' is called
+-- on the TLS variable.
+mkTLSWithDestructor new mdestructor = do
   evaluate check_error
-  key  <- easy_make_pthread_key
+  wrap <- maybe
+    (return nullFunPtr)
+    (\dfun -> wrapDestructor (peek >=> deRefStablePtr >=> dfun))
+    mdestructor
+  key  <- easy_make_pthread_key wrap
 --   putStrLn $ "KEY CREATED: "++show key
   allC <- newIORef []
-  return $! TLS key new allC
+  return $! TLS key new allC wrap
+
+-- Note [Ptr indirection]
+--
+-- getTLS check that the value of the pthread_key is not null
+-- to determine if a new copy of the TLS variable needs to be created.
+-- However, @castStablePtrToPtr <$> newStablePtr a@ might return @nullPtr@
+-- as the API of StablePtr does not guarantee that the resulting pointer is a
+-- valid address.
+--
+-- To ensure that getTLS does not create two copies for the same thread,
+-- we wrap the StablePtr in a malloc'ed Ptr and store that with setspecific.
+--
+-- Another undesirable consequence of confusing a StablePtr with nullPtr is
+-- that the destructor function of the pthread_key wouldn't be called in that
+-- case.
 
 getTLS TLS{key,mknew,allCopies} = do
   p <- pthread_getspecific key
-  if castStablePtrToPtr p == nullPtr then do
+  if p == nullPtr then do
     a <- mknew
     sp <- newStablePtr a
-    setspecific key sp
-    atomicModifyIORef' allCopies (\l -> (sp:l,()))
+    -- See note [Ptr indirection]
+    ptr <- malloc
+    poke ptr sp
+    setspecific key ptr
+    atomicModifyIORef' allCopies (\l -> (ptr:l,()))
     return a
    else
-    deRefStablePtr p
+    peek p >>= deRefStablePtr
 
 allTLS TLS{allCopies} = do
     ls <- readIORef allCopies
-    mapM deRefStablePtr ls
+    mapM (peek >=> deRefStablePtr) ls
 
 forEachTLS_ tls fn = do
   ls <- allTLS tls
   forM_ ls fn
 
-freeAllTLS TLS{key,allCopies} = do
+freeAllTLS TLS{key, allCopies, destructor} = do
     ls <- readIORef allCopies
     delete key
-    mapM_ freeStablePtr ls
+    when (destructor /= nullFunPtr) (freeHaskellFunPtr destructor)
+    mapM_ (\p -> peek p >>= freeStablePtr >> free p) ls
