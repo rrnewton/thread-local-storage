@@ -119,7 +119,7 @@ benchPar2 num act = toBenchmarkable $ \ iters -> do
       go = do rep (fromIntegral iters) act
               incrCounter_ 1 done
               waitCounter
-  replicateM_ num $ forkOS go
+  replicateM_ (num-1) $ forkOS go
   go
 
 {-# INLINE benchPar2 #-}
