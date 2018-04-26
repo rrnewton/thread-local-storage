@@ -14,6 +14,7 @@ import Criterion.Main
 import Data.Atomics.Counter
 
 import Control.Monad
+import Control.Concurrent (forkOS)
 import Control.Concurrent.MVar
 import Data.IORef
 import GHC.Conc
@@ -86,10 +87,10 @@ benchPar0 numT new fn shutd = toBenchmarkable $ \ iters -> do
   -- numCapabilities.
   let totalIters = (fromIntegral iters) * (max numCap numT)
       perThread  = totalIters `quot` numT
-  mvs <- forM [0..numT-1] $ \ n -> do
+  mvs <- replicateM numT $ do
     v <- newEmptyMVar
-    _ <- forkOn n $ do rep perThread (fn x)
-                       putMVar v ()
+    _ <- forkOS $ do rep perThread (fn x)
+                     putMVar v ()
     return v
   forM_ mvs takeMVar
   -- Shut down only when all threads are finished with it:
@@ -101,10 +102,10 @@ benchPar0 numT new fn shutd = toBenchmarkable $ \ iters -> do
 --   This version uses MVar synchronization.
 benchPar1 :: Int -> IO () -> Benchmarkable
 benchPar1 num act = toBenchmarkable $ \ iters -> do
-  mvs <- forM [0..num-1] $ \ n -> do
+  mvs <- replicateM num $ do
     v <- newEmptyMVar
-    _ <- forkOn n $ do rep (fromIntegral iters) act
-                       putMVar v ()
+    _ <- forkOS $ do rep (fromIntegral iters) act
+                     putMVar v ()
     return v
   forM_ mvs takeMVar
 {-# INLINE benchPar1 #-}
@@ -118,7 +119,7 @@ benchPar2 num act = toBenchmarkable $ \ iters -> do
       go = do rep (fromIntegral iters) act
               incrCounter_ 1 done
               waitCounter
-  forM_ [1..num-1] $ \ n -> forkOn n go
+  replicateM_ num $ forkOS go
   go
 
 {-# INLINE benchPar2 #-}
