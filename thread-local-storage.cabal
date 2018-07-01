@@ -1,5 +1,5 @@
 name:                thread-local-storage
-version:             0.1.2
+version:             0.2
 synopsis:            Several options for thread-local-storage (TLS) in Haskell.
 description:
    .
