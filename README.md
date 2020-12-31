@@ -3,7 +3,7 @@
 [![Hackage Dependencies](https://img.shields.io/hackage-deps/v/thread-local-storage.svg)](http://packdeps.haskellers.com/reverse/thread-local-storage)
 [![Haskell Programming Language](https://img.shields.io/badge/language-Haskell-blue.svg)][Haskell.org]
 [![BSD3 License](http://img.shields.io/badge/license-BSD3-brightgreen.svg)][tl;dr Legal: BSD3]
-[![Build](https://img.shields.io/travis/rrnewton/thread-local-storage.svg)](https://travis-ci.org/rrnewton/thread-local-storage)
+[![Build Status](https://github.com/rrnewton/thread-local-storage/workflows/Haskell-CI/badge.svg)](https://github.com/rrnewton/thread-local-storage/actions?query=workflow%3AHaskell-CI)
 
 [Hackage: thread-local-storage]:
   http://hackage.haskell.org/package/thread-local-storage
